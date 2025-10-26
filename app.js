@@ -121,6 +121,14 @@ We're honoured to have Shri V.C. Sajjanar, IPS, Commissioner of Police, Hyderaba
 Join the movement — Say No to Drugs, Yes to Life! 🌿`;
 }
 
+// Twilio webhook endpoint (forwards to main messages endpoint)
+app.post('/webhook', (req, res) => {
+    logger.info('Webhook request received, forwarding to /whatsapp/messages');
+    // Forward the request to the main messages endpoint
+    req.url = '/whatsapp/messages';
+    app._router.handle(req, res);
+});
+
 // Main WhatsApp webhook endpoint
 app.post('/whatsapp/messages', (req, res) => {
     try {
