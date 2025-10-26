@@ -117,13 +117,13 @@ npm install
 #### Option A: Fresh Installation
 ```bash
 # Create database and import schema
-mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < database_schema.sql
+mysql -h YOUR_DB_HOST -u YOUR_DB_USER -p YOUR_DB_NAME < database_schema.sql
 ```
 
 #### Option B: Existing Database Migration
 ```bash
 # Add WhatsApp profile name support to existing database
-mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < migration_add_whatsapp_profile.sql
+mysql -h YOUR_DB_HOST -u YOUR_DB_USER -p YOUR_DB_NAME < migration_add_whatsapp_profile.sql
 ```
 
 ### 4. Environment Configuration
@@ -140,10 +140,10 @@ nano .env
 
 ```env
 # Database Configuration
-DB_HOST=bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com
-DB_USER=shahzoor
-DB_PASSWORD=S!12hahzoorali
-DB_NAME=NashaMukht
+DB_HOST=your_database_host
+DB_USER=your_database_username
+DB_PASSWORD=your_database_password
+DB_NAME=your_database_name
 
 # Twilio Configuration (REQUIRED)
 TWILIO_ACCOUNT_SID=your_twilio_account_sid
@@ -295,7 +295,7 @@ cp env.example .env
 nano .env  # Add your production values
 
 # Setup database
-mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < database_schema.sql
+mysql -h YOUR_DB_HOST -u YOUR_DB_USER -p YOUR_DB_NAME < database_schema.sql
 
 # Start application
 pm2 start app.js --name "nasha-mukht-bot"
@@ -396,10 +396,10 @@ node -e "console.log(process.env.DB_HOST)"
 #### Database Connection Failed
 ```bash
 # Test database connectivity
-mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p
+mysql -h YOUR_DB_HOST -u YOUR_DB_USER -p
 
 # Check database exists
-mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p -e "SHOW DATABASES;"
+mysql -h YOUR_DB_HOST -u YOUR_DB_USER -p -e "SHOW DATABASES;"
 ```
 
 #### WhatsApp Messages Not Received

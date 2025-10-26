@@ -91,10 +91,10 @@ Edit the `.env` file with your production values:
 
 ```env
 # Database Configuration
-DB_HOST=bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com
-DB_USER=shahzoor
-DB_PASSWORD=S!12hahzoorali
-DB_NAME=NashaMukht
+DB_HOST=your_database_host
+DB_USER=your_database_username
+DB_PASSWORD=your_database_password
+DB_NAME=your_database_name
 
 # Server Configuration
 PORT=3000
@@ -127,7 +127,7 @@ RATE_LIMIT_MAX_REQUESTS=10
 
 ```bash
 # Connect to your database and create schema
-mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < database_schema.sql
+mysql -h YOUR_DB_HOST -u YOUR_DB_USER -p YOUR_DB_NAME < database_schema.sql
 
 # Verify database connection
 node -e "
@@ -318,7 +318,7 @@ Add this content:
 ```bash
 #!/bin/bash
 DATE=$(date +%Y%m%d_%H%M%S)
-mysqldump -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht > /var/www/nashamukht/backups/nashamukht_backup_$DATE.sql
+mysqldump -h YOUR_DB_HOST -u YOUR_DB_USER -p YOUR_DB_NAME > /var/www/nashamukht/backups/nashamukht_backup_$DATE.sql
 find /var/www/nashamukht/backups/ -name "*.sql" -mtime +7 -delete
 ```
 
