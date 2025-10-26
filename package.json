@@ -1,22 +1,51 @@
 {
-  "name": "NashaMukht",
+  "name": "nasha-mukht-bharat-run",
   "version": "1.0.0",
-  "description": "Nasha Mukht Bharat RUN - WhatsApp Registration System",
+  "description": "WhatsApp-based registration system for Nasha Mukht Bharat RUN - promoting a drug-free India through technology",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "logs": "pm2 logs nasha-mukht-bot",
+    "restart": "pm2 restart nasha-mukht-bot",
+    "stop": "pm2 stop nasha-mukht-bot"
   },
   "keywords": [
     "whatsapp",
     "registration",
     "marathon",
     "nasha-mukht",
-    "drug-free-india"
+    "drug-free-india",
+    "twilio",
+    "nodejs",
+    "express",
+    "mysql",
+    "event-management",
+    "hyderabad",
+    "wakeup-humanity"
   ],
-  "author": "Wakeup Humanity Organization",
+  "author": {
+    "name": "Wakeup Humanity Organization",
+    "email": "info@wakeuphumanity.org",
+    "url": "https://www.wakeuphumanity.org"
+  },
+  "contributors": [
+    {
+      "name": "Shahzoor Ali",
+      "email": "shahzoor@example.com"
+    }
+  ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shahzoorali/NashaMukht2025.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shahzoorali/NashaMukht2025/issues"
+  },
+  "homepage": "https://github.com/shahzoorali/NashaMukht2025#readme",
   "dependencies": {
     "body-parser": "^1.20.2",
     "express": "^4.18.3",
@@ -27,9 +56,20 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.0.2",
+    "eslint": "^8.0.0"
   },
   "engines": {
-    "node": ">=14.0.0"
-  }
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
 }

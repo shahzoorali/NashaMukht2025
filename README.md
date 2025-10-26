@@ -1,54 +1,109 @@
 # 🏃‍♂️ Nasha Mukht Bharat RUN - WhatsApp Registration System
 
-A WhatsApp-based registration system for the **Nasha Mukht Bharat RUN** event organized by Wakeup Humanity Organization.
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.x-blue.svg)](https://expressjs.com/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg)](https://mysql.com/)
+[![Twilio](https://img.shields.io/badge/Twilio-WhatsApp-red.svg)](https://twilio.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 📅 Event Details
+> A comprehensive WhatsApp-based registration system for the **Nasha Mukht Bharat RUN** event, promoting a drug-free India through technology.
 
-- **Event Name**: Nasha Mukht Bharat RUN
-- **Date**: 14th November 2025 (Friday)
-- **Time**: 7:00 AM – 9:00 AM
-- **Location**: Sanjeevaiah Park, Necklace Road, Hyderabad
-- **Chief Guest**: Shri V.C. Sajjanar, IPS, Commissioner of Police, Hyderabad
-- **Contact**: 99635 52551 | 93460 13569
-- **Website**: www.wakeuphumanity.org
+## 📅 Event Information
+
+| Detail | Information |
+|--------|-------------|
+| **Event Name** | Nasha Mukht Bharat RUN |
+| **Date** | 14th November 2025 (Friday) |
+| **Time** | 7:00 AM – 9:00 AM |
+| **Location** | Sanjeevaiah Park, Necklace Road, Hyderabad |
+| **Chief Guest** | Shri V.C. Sajjanar, IPS, Commissioner of Police, Hyderabad |
+| **Contact** | 99635 52551 \| 93460 13569 |
+| **Website** | [www.wakeuphumanity.org](https://www.wakeuphumanity.org) |
+| **Organization** | Wakeup Humanity Organization |
+
+## 🎯 Project Overview
+
+This project provides a complete WhatsApp-based registration system for marathon events, specifically designed for the Nasha Mukht Bharat RUN. It enables participants to register, manage their information, and receive event updates through WhatsApp messages, making event registration accessible to everyone with a smartphone.
+
+### 🌟 Key Highlights
+
+- **📱 WhatsApp-First Design**: Leverages WhatsApp's popularity in India for maximum accessibility
+- **🤖 Intelligent Bot**: Handles registration, status checks, and information requests automatically
+- **📊 Real-time Analytics**: Live dashboard with registration statistics and participant management
+- **🔒 Production-Ready**: Built with security, scalability, and reliability in mind
+- **🌐 Multi-platform**: Works on any device with WhatsApp access
 
 ## 🚀 Features
 
-- **WhatsApp Registration**: Users can register via WhatsApp messages
-- **WhatsApp Profile Name Capture**: Automatically captures and stores WhatsApp profile names
-- **Real-time Admin Dashboard**: Monitor registrations with live statistics
-- **User Management**: Change names, check status, get event information
-- **Database Logging**: Complete message history and participant tracking
-- **Error Handling**: Robust error handling with retry mechanisms
-- **Rate Limiting**: Protection against spam and abuse
-- **Health Monitoring**: Health check endpoints for system monitoring
+### Core Functionality
+- ✅ **WhatsApp Registration**: Simple text-based registration process
+- ✅ **Profile Name Capture**: Automatically captures WhatsApp profile names
+- ✅ **Status Management**: Users can check registration status and update information
+- ✅ **Event Information**: Instant access to event details and updates
+- ✅ **Name Updates**: Participants can change their registered names
+
+### Admin Features
+- 📊 **Real-time Dashboard**: Live statistics and participant monitoring
+- 📋 **Participant Management**: View, search, and manage all registrations
+- 📈 **Analytics**: Registration trends and demographic insights
+- 🔄 **Auto-refresh**: Real-time updates without manual refresh
+- 📱 **Responsive Design**: Works on desktop, tablet, and mobile
+
+### Technical Features
+- 🛡️ **Security**: Rate limiting, input validation, and SQL injection protection
+- 📝 **Logging**: Comprehensive logging with Winston for debugging and monitoring
+- 🔄 **Error Handling**: Robust error handling with retry mechanisms
+- 🏥 **Health Monitoring**: Health check endpoints for system monitoring
+- 🔧 **Environment Management**: Secure configuration with environment variables
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Node.js with Express
-- **Database**: MySQL (AWS RDS)
-- **WhatsApp API**: Twilio
-- **Admin Panel**: PHP with responsive design
-- **Logging**: Winston
-- **Security**: Rate limiting, input validation
+### Backend
+- **Node.js** (v18+) - JavaScript runtime
+- **Express.js** - Web application framework
+- **Twilio** - WhatsApp API integration
+- **Winston** - Logging framework
+- **MySQL2** - Database driver
+
+### Database
+- **MySQL** (AWS RDS) - Primary database
+- **Connection Pooling** - Optimized database connections
+- **Migrations** - Database schema management
+
+### Frontend
+- **PHP** - Admin dashboard
+- **HTML5/CSS3** - Responsive design
+- **JavaScript** - Interactive features
+- **Bootstrap** - UI framework (implied)
+
+### DevOps & Deployment
+- **PM2** - Process management
+- **Nginx** - Reverse proxy and web server
+- **Let's Encrypt** - SSL certificates
+- **AWS EC2** - Cloud hosting
+- **GitHub** - Version control
 
 ## 📋 Prerequisites
 
-- Node.js (v14 or higher)
-- MySQL database access
-- Twilio account with WhatsApp API access
-- PHP (for admin panel)
+### System Requirements
+- **Node.js** v14 or higher
+- **MySQL** database (AWS RDS recommended)
+- **PHP** 7.4+ (for admin panel)
+- **Git** (for version control)
+
+### Service Requirements
+- **Twilio Account** with WhatsApp API access
+- **AWS RDS** MySQL instance
+- **EC2 Instance** (Ubuntu/Amazon Linux)
+- **Domain Name** (optional but recommended)
 
 ## 🔧 Installation & Setup
 
-### 1. Clone/Download the Project
+### 1. Clone the Repository
 
 ```bash
-# If using git
-git clone <repository-url>
-cd NashaMukht
-
-# Or download and extract the files
+git clone https://github.com/shahzoorali/NashaMukht2025.git
+cd NashaMukht2025
 ```
 
 ### 2. Install Dependencies
@@ -59,54 +114,62 @@ npm install
 
 ### 3. Database Setup
 
-1. **Create the database** using the provided schema:
-   ```bash
-   mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < database_schema.sql
-   ```
+#### Option A: Fresh Installation
+```bash
+# Create database and import schema
+mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < database_schema.sql
+```
 
-2. **For existing databases**, run the migration script to add WhatsApp profile name support:
-   ```bash
-   mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < migration_add_whatsapp_profile.sql
-   ```
-
-3. **Verify database connection** with the credentials:
-   - Host: `bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com`
-   - Username: `shahzoor`
-   - Password: `S!12hahzoorali`
-   - Database: `NashaMukht`
+#### Option B: Existing Database Migration
+```bash
+# Add WhatsApp profile name support to existing database
+mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < migration_add_whatsapp_profile.sql
+```
 
 ### 4. Environment Configuration
 
-1. **Copy the environment template**:
-   ```bash
-   cp env.example .env
-   ```
+```bash
+# Copy environment template
+cp env.example .env
 
-2. **Update `.env` file** with your Twilio credentials:
-   ```env
-   # Database Configuration
-   DB_HOST=bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com
-   DB_USER=shahzoor
-   DB_PASSWORD=S!12hahzoorali
-   DB_NAME=NashaMukht
+# Edit with your configuration
+nano .env
+```
 
-   # Twilio Configuration (REQUIRED)
-   TWILIO_ACCOUNT_SID=your_twilio_account_sid
-   TWILIO_AUTH_TOKEN=your_twilio_auth_token
-   TWILIO_PHONE_NUMBER=your_twilio_whatsapp_number
+#### Required Environment Variables
 
-   # Server Configuration
-   PORT=3000
-   NODE_ENV=production
-   ```
+```env
+# Database Configuration
+DB_HOST=bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com
+DB_USER=shahzoor
+DB_PASSWORD=S!12hahzoorali
+DB_NAME=NashaMukht
+
+# Twilio Configuration (REQUIRED)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_whatsapp_number
+
+# Server Configuration
+PORT=3000
+NODE_ENV=production
+
+# Event Configuration
+EVENT_NAME=Nasha Mukht Bharat RUN
+EVENT_DATE=2025-11-14
+EVENT_TIME=07:00
+EVENT_LOCATION=Sanjeevaiah Park, Necklace Road, Hyderabad
+EVENT_CONTACT_1=99635 52551
+EVENT_CONTACT_2=93460 13569
+EVENT_WEBSITE=www.wakeuphumanity.org
+```
 
 ### 5. Twilio Setup
 
-1. **Create a Twilio account** at [twilio.com](https://twilio.com)
-2. **Enable WhatsApp Sandbox** or get WhatsApp Business API access
-3. **Configure webhook URL** in Twilio console:
-   - Webhook URL: `https://yourdomain.com/whatsapp/messages`
-   - HTTP Method: POST
+1. **Create Twilio Account**: [console.twilio.com](https://console.twilio.com)
+2. **Enable WhatsApp Sandbox** or get Business API access
+3. **Configure Webhook**: Set webhook URL to `https://yourdomain.com/whatsapp/messages`
+4. **Test Connection**: Send test messages to verify setup
 
 ### 6. Start the Application
 
@@ -118,152 +181,314 @@ npm run dev
 npm start
 ```
 
-### 7. Admin Panel Setup
+## 📱 WhatsApp Bot Usage
 
-1. **Upload `admin.php`** to your web server
-2. **Access the admin panel** at: `https://yourdomain.com/admin.php`
-3. **Monitor registrations** in real-time
+### User Commands
 
-## 📱 WhatsApp Bot Commands
+| Command | Description | Example |
+|---------|-------------|---------|
+| `hi`, `hello`, `start` | Start registration process | Send: `hi` |
+| `[Full Name]` | Complete registration | Send: `John Doe` |
+| `info` | Get event information | Send: `info` |
+| `status` | Check registration status | Send: `status` |
+| `change name` | Update registered name | Send: `change name` |
 
-Users can interact with the bot using these commands:
+### User Journey Example
 
-| Command | Description |
-|---------|-------------|
-| `hi`, `hello`, `start` | Start registration process |
-| `[Full Name]` | Complete registration with name |
-| `info` | Get event information |
-| `status` | Check registration status |
-| `change name` | Update registered name |
+```
+User: "hi"
+Bot: "🏃‍♂️ Welcome to Nasha Mukht Bharat RUN! 🏃‍♀️
+     Event details...
+     To register, please reply with your FULL NAME."
 
-## 🔄 User Journey
+User: "Rajesh Kumar"
+Bot: "🎉 Thank you Rajesh Kumar! You are successfully registered!
+     Your Registration ID: 123
+     Event details...
+     Commands: 'Info', 'Status', 'Change Name'"
 
-1. **User sends "hi"** → Bot responds with event details and registration prompt
-2. **User sends full name** → Bot registers user and provides registration ID
-3. **User can check status** → Bot shows registration details
-4. **User can change name** → Bot prompts for new name and updates record
+User: "status"
+Bot: "✅ You are already registered!
+     Registration ID: 123
+     Name: Rajesh Kumar
+     Registration Date: 27 Oct 2025, 14:30
+     Event details..."
+```
 
-## 📊 Database Schema
+## 🗄️ Database Schema
 
 ### Main Tables
 
-- **`participants`**: Main participant data
-- **`events`**: Event information
-- **`message_logs`**: WhatsApp message history
-- **`admin_users`**: Admin panel access
-- **`event_stats`**: Analytics and statistics
+#### `participants`
+```sql
+CREATE TABLE participants (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    phone_number VARCHAR(20) UNIQUE NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    whatsapp_profile_name VARCHAR(100) NULL,
+    email VARCHAR(100) NULL,
+    age INT NULL,
+    gender ENUM('Male', 'Female', 'Other') NULL,
+    emergency_contact VARCHAR(20) NULL,
+    emergency_contact_name VARCHAR(100) NULL,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('active', 'awaiting_name_change', 'cancelled', 'completed') DEFAULT 'active',
+    registration_source ENUM('whatsapp', 'website', 'manual') DEFAULT 'whatsapp',
+    event_id INT DEFAULT 1,
+    tshirt_size ENUM('XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL') NULL,
+    medical_conditions TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
 
-### Key Fields
-
-- `phone_number`: Unique WhatsApp number
-- `full_name`: Participant's full name
-- `whatsapp_profile_name`: WhatsApp profile name (automatically captured)
-- `status`: Registration status (active, cancelled, etc.)
-- `registration_date`: When they registered
-- `registration_source`: How they registered (whatsapp, website, etc.)
+#### Other Tables
+- **`events`** - Event information and management
+- **`message_logs`** - Complete WhatsApp interaction history
+- **`admin_users`** - Admin panel access control
+- **`event_stats`** - Analytics and statistics
 
 ## 🚦 API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/whatsapp/messages` | POST | Main WhatsApp webhook |
-| `/whatsapp/fallback` | POST | Fallback for failed messages |
-| `/health` | GET | Health check endpoint |
+| Endpoint | Method | Description | Authentication |
+|----------|--------|-------------|----------------|
+| `/whatsapp/messages` | POST | Main WhatsApp webhook | Twilio |
+| `/whatsapp/fallback` | POST | Fallback for failed messages | Twilio |
+| `/health` | GET | Health check endpoint | None |
+| `/admin.php` | GET | Admin dashboard | None |
+
+### Webhook Payload Example
+
+```json
+{
+  "From": "whatsapp:+919876543210",
+  "To": "whatsapp:+14155238886",
+  "Body": "John Doe",
+  "ProfileName": "John 🏃‍♂️",
+  "MessageSid": "SM1234567890abcdef"
+}
+```
+
+## 🚀 Deployment
+
+### Quick Deploy to EC2
+
+```bash
+# Connect to EC2
+ssh -i your-key.pem ubuntu@your-ec2-ip
+
+# Install dependencies
+sudo apt update && sudo apt upgrade -y
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs nginx mysql-client git
+sudo npm install -g pm2
+
+# Clone and setup
+cd /var/www
+sudo mkdir nashamukht && sudo chown ubuntu:ubuntu nashamukht
+cd nashamukht
+git clone https://github.com/shahzoorali/NashaMukht2025.git .
+npm install --production
+
+# Configure environment
+cp env.example .env
+nano .env  # Add your production values
+
+# Setup database
+mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p NashaMukht < database_schema.sql
+
+# Start application
+pm2 start app.js --name "nasha-mukht-bot"
+pm2 save
+pm2 startup
+```
+
+### Detailed Deployment Guide
+
+For comprehensive deployment instructions, see:
+- [EC2_DEPLOYMENT_GUIDE.md](EC2_DEPLOYMENT_GUIDE.md) - Complete EC2 setup
+- [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) - Step-by-step checklist
+
+## 📊 Admin Dashboard
+
+Access the admin dashboard at: `https://yourdomain.com/admin.php`
+
+### Dashboard Features
+- **📈 Real-time Statistics**: Total registrations, active participants, demographics
+- **📋 Recent Registrations**: Latest 20 registrations with details
+- **👥 All Participants**: Complete participant list with search and filter
+- **📱 WhatsApp Profile Names**: Display both registered names and WhatsApp profiles
+- **🔄 Auto-refresh**: Updates every 30 seconds
+- **📱 Responsive Design**: Works on all devices
+
+### Dashboard Screenshots
+*[Screenshots would be added here in production]*
+
+## 🧪 Testing
+
+### Test Scenarios
+
+Run comprehensive tests using the provided test scenarios:
+
+```bash
+# Run test scenarios
+node test_scenarios.js
+
+# Manual testing
+curl http://localhost:3000/health
+curl http://yourdomain.com/admin.php
+```
+
+### Test Coverage
+- ✅ User registration flow
+- ✅ Status checking
+- ✅ Name updates
+- ✅ Error handling
+- ✅ Database operations
+- ✅ Admin panel functionality
+
+For detailed testing procedures, see [TEST_SCENARIOS.md](TEST_SCENARIOS.md).
 
 ## 📈 Monitoring & Analytics
 
-- **Real-time statistics** in admin panel
-- **Message logging** for all interactions
-- **Registration trends** and analytics
-- **Error tracking** with Winston logger
+### Application Monitoring
+- **PM2 Process Manager**: Automatic restarts and monitoring
+- **Winston Logging**: Structured logging with different levels
+- **Health Checks**: Regular health endpoint monitoring
+- **Error Tracking**: Comprehensive error logging and alerting
+
+### Analytics Available
+- Registration trends over time
+- Geographic distribution (if phone numbers include area codes)
+- Gender demographics
+- Registration source tracking
+- Message interaction patterns
 
 ## 🔒 Security Features
 
-- **Rate limiting** to prevent spam
-- **Input validation** and sanitization
-- **SQL injection protection** with prepared statements
-- **Environment variables** for sensitive data
-- **Error handling** without exposing sensitive information
+### Data Protection
+- **Environment Variables**: Sensitive data stored securely
+- **Input Validation**: All inputs sanitized and validated
+- **SQL Injection Protection**: Prepared statements used throughout
+- **Rate Limiting**: Protection against spam and abuse
+
+### Access Control
+- **Admin Panel**: Secure access to participant data
+- **Database Security**: Encrypted connections to AWS RDS
+- **Webhook Security**: Twilio signature verification
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **Database Connection Failed**
-   - Check database credentials in `.env`
-   - Verify network connectivity to AWS RDS
-   - Ensure database exists and schema is created
-
-2. **Twilio Webhook Not Working**
-   - Verify webhook URL is accessible
-   - Check Twilio account credentials
-   - Ensure WhatsApp sandbox is properly configured
-
-3. **Messages Not Being Received**
-   - Check server logs for errors
-   - Verify Twilio webhook configuration
-   - Test with Twilio's webhook testing tools
-
-### Logs Location
-
-- **Error logs**: `logs/error.log`
-- **Combined logs**: `logs/combined.log`
-- **Console output**: Real-time in terminal
-
-## 🔄 Deployment
-
-### Production Deployment
-
-1. **Set up a production server** (AWS EC2, DigitalOcean, etc.)
-2. **Install Node.js and PM2** for process management
-3. **Configure reverse proxy** (Nginx) for SSL and domain
-4. **Set up SSL certificate** for HTTPS
-5. **Configure environment variables** for production
-6. **Set up log rotation** and monitoring
-
-### PM2 Configuration
-
+#### Application Won't Start
 ```bash
-# Install PM2
-npm install -g pm2
+# Check logs
+pm2 logs nasha-mukht-bot
 
-# Start application with PM2
-pm2 start app.js --name "nasha-mukht-bot"
+# Check environment variables
+cat .env
 
-# Save PM2 configuration
-pm2 save
-pm2 startup
+# Test database connection
+node -e "console.log(process.env.DB_HOST)"
 ```
 
-## 📞 Support
+#### Database Connection Failed
+```bash
+# Test database connectivity
+mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p
 
-For technical support or questions:
+# Check database exists
+mysql -h bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com -u shahzoor -p -e "SHOW DATABASES;"
+```
 
-- **Organization**: Wakeup Humanity Organization
-- **Contact**: 99635 52551 | 93460 13569
-- **Website**: www.wakeuphumanity.org
+#### WhatsApp Messages Not Received
+- Verify Twilio webhook URL in console
+- Check application logs for incoming requests
+- Test webhook with curl: `curl -X POST https://yourdomain.com/whatsapp/messages`
 
-## 📄 License
-
-This project is licensed under the MIT License.
+### Log Locations
+- **Application Logs**: `logs/combined.log`
+- **Error Logs**: `logs/error.log`
+- **PM2 Logs**: `pm2 logs nasha-mukht-bot`
+- **Nginx Logs**: `/var/log/nginx/error.log`
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+We welcome contributions! Please follow these steps:
 
-## 📝 Changelog
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Commit your changes**: `git commit -m 'Add amazing feature'`
+4. **Push to the branch**: `git push origin feature/amazing-feature`
+5. **Open a Pull Request**
 
-### Version 1.0.0
-- Initial release
-- WhatsApp registration system
-- Admin dashboard
-- Database schema
-- Error handling and logging
+### Development Guidelines
+- Follow existing code style
+- Add tests for new features
+- Update documentation
+- Ensure all tests pass
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Support & Contact
+
+### Technical Support
+- **GitHub Issues**: [Create an issue](https://github.com/shahzoorali/NashaMukht2025/issues)
+- **Documentation**: Check the guides in this repository
+- **Email**: [Your technical support email]
+
+### Event Information
+- **Organization**: Wakeup Humanity Organization
+- **Contact**: 99635 52551 | 93460 13569
+- **Website**: [www.wakeuphumanity.org](https://www.wakeuphumanity.org)
+- **Event Date**: November 14, 2025
+- **Location**: Sanjeevaiah Park, Necklace Road, Hyderabad
+
+## 🙏 Acknowledgments
+
+- **Wakeup Humanity Organization** for organizing the Nasha Mukht Bharat RUN
+- **Shri V.C. Sajjanar, IPS** for being the Chief Guest
+- **Twilio** for providing WhatsApp API services
+- **AWS** for cloud infrastructure support
+- **Open Source Community** for the amazing tools and libraries
+
+## 📚 Additional Resources
+
+- [Twilio WhatsApp API Documentation](https://www.twilio.com/docs/whatsapp)
+- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
+- [Express.js Documentation](https://expressjs.com/)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [PM2 Process Manager](https://pm2.keymetrics.io/)
 
 ---
 
-**🏃‍♂️ Let's run together for a Drug-Free India! 🇮🇳**
+## 🏃‍♂️ Join the Movement
+
+**Let's run together for a Drug-Free India! 🇮🇳**
+
+Register for the Nasha Mukht Bharat RUN and be part of this important movement. Every step counts towards building a healthier, drug-free society.
+
+**Event Details:**
+- 📅 **Date**: November 14, 2025 (Friday)
+- 🕖 **Time**: 7:00 AM – 9:00 AM
+- 📍 **Location**: Sanjeevaiah Park, Necklace Road, Hyderabad
+- 👨‍💼 **Chief Guest**: Shri V.C. Sajjanar, IPS, Commissioner of Police, Hyderabad
+
+**Contact Information:**
+- 📞 **Phone**: 99635 52551 | 93460 13569
+- 🌐 **Website**: [www.wakeuphumanity.org](https://www.wakeuphumanity.org)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for Nasha Mukht Bharat RUN**
+
+[![GitHub stars](https://img.shields.io/github/stars/shahzoorali/NashaMukht2025?style=social)](https://github.com/shahzoorali/NashaMukht2025/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/shahzoorali/NashaMukht2025?style=social)](https://github.com/shahzoorali/NashaMukht2025/network)
+[![GitHub issues](https://img.shields.io/github/issues/shahzoorali/NashaMukht2025)](https://github.com/shahzoorali/NashaMukht2025/issues)
+
+</div>
