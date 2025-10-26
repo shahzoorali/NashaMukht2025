@@ -140,9 +140,9 @@ nano .env
 
 ```env
 # Database Configuration
-DB_HOST=bbin.cfuk0cmy2lip.ap-south-1.rds.amazonaws.com
+DB_HOST=********
 DB_USER=shahzoor
-DB_PASSWORD=S!12hahzoorali
+DB_PASSWORD********
 DB_NAME=NashaMukht
 
 # Twilio Configuration (REQUIRED)
