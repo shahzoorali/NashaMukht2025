@@ -133,7 +133,7 @@ app.post('/webhook', (req, res) => {
 app.post('/whatsapp/messages', (req, res) => {
     try {
         const fromNumber = req.body.From.replace('whatsapp:', '');
-        const receivedMessage = req.body.Body.trim();
+        const receivedMessage = (req.body.Body || '').trim();
         const whatsappProfileName = req.body.ProfileName || null; // WhatsApp profile name
         const MessagingResponse = twilio.twiml.MessagingResponse;
         const response = new MessagingResponse();
@@ -193,9 +193,35 @@ app.post('/whatsapp/messages', (req, res) => {
                     logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                     sendResponse(res, response);
                 } else if (receivedMessage.toLowerCase() === "status") {
-                    response.message(`✅ You are already registered!\n\nRegistration ID: ${participant.id}\nName: ${participant.full_name}\nRegistration Date: ${participant.registration_date}\n\n${getEventInfoMessage()}\n\nTo change your name, reply 'Change Name'`);
+                    response.message(`✅ You are already registered!\n\nRegistration ID: ${participant.id}\nName: ${participant.full_name}\nRegistration Date: ${participant.registration_date}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
                     logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                     sendResponse(res, response);
+                } else if (receivedMessage.startsWith("DELETE ")) {
+                    // Handle hidden DELETE command (admin function)
+                    const deleteMatch = receivedMessage.match(/^DELETE\s+(\d+)$/);
+                    if (deleteMatch) {
+                        const deleteId = parseInt(deleteMatch[1]);
+                        
+                        // Delete any participant by ID (admin command)
+                        pool.query('DELETE FROM participants WHERE id = ?', 
+                            [deleteId], (deleteError, deleteResults) => {
+                            if (deleteError) {
+                                logger.error("Error deleting participant from database: ", deleteError);
+                                response.message("We encountered an error. Please try again later.");
+                            } else if (deleteResults.affectedRows === 0) {
+                                response.message("Registration not found.");
+                            } else {
+                                response.message(`✅ Registration (ID: ${deleteId}) has been successfully deleted.`);
+                                logger.info(`Admin ${fromNumber} deleted registration ID: ${deleteId}`);
+                            }
+                            logMessage(fromNumber, 'outgoing', response.toString(), null);
+                            sendResponse(res, response);
+                        });
+                    } else {
+                        response.message("Invalid command format.");
+                        logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
+                        sendResponse(res, response);
+                    }
                 } else {
                     // Update WhatsApp profile name if it has changed
                     if (whatsappProfileName && whatsappProfileName !== participant.whatsapp_profile_name) {
@@ -209,16 +235,42 @@ app.post('/whatsapp/messages', (req, res) => {
                         });
                     }
                     
-                    response.message(`✅ You are already registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${participant.id}\nName: ${participant.full_name}\n\n${getEventInfoMessage()}\n\nCommands:\n• 'Info' - Event details\n• 'Status' - Your registration status\n• 'Change Name' - Update your name`);
+                    response.message(`✅ You are already registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${participant.id}\nName: ${participant.full_name}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
                     logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                     sendResponse(res, response);
                 }
             } else {
                 // New participant
                 if (receivedMessage.toLowerCase() === "hi" || receivedMessage.toLowerCase() === "hello" || receivedMessage.toLowerCase() === "start") {
-                    response.message(`🏃‍♂️ Welcome to ${EVENT_INFO.name}! 🏃‍♀️\n\n${getEventInfoMessage()}\n\nTo register, please reply with your FULL NAME.`);
+                    response.message(`🏃‍♂️ Welcome to ${EVENT_INFO.name}! 🏃‍♀️\n\nPlease reply with your FULL NAME to complete registration.`);
                     logMessage(fromNumber, 'outgoing', response.toString());
                     sendResponse(res, response);
+                } else if (receivedMessage.startsWith("DELETE ")) {
+                    // Handle hidden DELETE command (admin function) for new users
+                    const deleteMatch = receivedMessage.match(/^DELETE\s+(\d+)$/);
+                    if (deleteMatch) {
+                        const deleteId = parseInt(deleteMatch[1]);
+                        
+                        // Delete any participant by ID (admin command)
+                        pool.query('DELETE FROM participants WHERE id = ?', 
+                            [deleteId], (deleteError, deleteResults) => {
+                            if (deleteError) {
+                                logger.error("Error deleting participant from database: ", deleteError);
+                                response.message("We encountered an error. Please try again later.");
+                            } else if (deleteResults.affectedRows === 0) {
+                                response.message("Registration not found.");
+                            } else {
+                                response.message(`✅ Registration (ID: ${deleteId}) has been successfully deleted.`);
+                                logger.info(`Admin ${fromNumber} deleted registration ID: ${deleteId}`);
+                            }
+                            logMessage(fromNumber, 'outgoing', response.toString(), null);
+                            sendResponse(res, response);
+                        });
+                    } else {
+                        response.message("Invalid command format.");
+                        logMessage(fromNumber, 'outgoing', response.toString());
+                        sendResponse(res, response);
+                    }
                 } else {
                     // Register new participant
                     const sanitizedName = sanitizeName(receivedMessage);
@@ -235,11 +287,27 @@ app.post('/whatsapp/messages', (req, res) => {
                             logger.error("Error inserting data into the database: ", insertError);
                             response.message("We encountered an error while processing your registration. Please try again later.");
                         } else {
-                            response.message(`🎉 Thank you ${sanitizedName}! You are successfully registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${insertResults.insertId}\n\n${getEventInfoMessage()}\n\nCommands:\n• 'Info' - Event details\n• 'Status' - Your registration status\n• 'Change Name' - Update your name`);
+                            response.message(`🎉 Thank you ${sanitizedName}! You are successfully registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${insertResults.insertId}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
                             logger.info(`New participant registered: ${sanitizedName} (${fromNumber}) with ID: ${insertResults.insertId}`);
                         }
                         logMessage(fromNumber, 'outgoing', response.toString(), insertResults ? insertResults.insertId : null);
                         sendResponse(res, response);
+                        
+                        // Send image after registration confirmation
+                        if (!insertError) {
+                            setTimeout(() => {
+                                const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+                                twilioClient.messages.create({
+                                    from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
+                                    to: `whatsapp:${fromNumber}`,
+                                    mediaUrl: ['https://bot.ravist.in/nashamukht.jpg']
+                                }).then(message => {
+                                    logger.info(`Image sent to ${fromNumber}: ${message.sid}`);
+                                }).catch(error => {
+                                    logger.error(`Error sending image to ${fromNumber}:`, error);
+                                });
+                            }, 1000);
+                        }
                     });
                 }
             }
