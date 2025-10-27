@@ -91,6 +91,21 @@ function sanitizeName(name) {
     return name.trim().replace(/[<>]/g, '');
 }
 
+function generateCustomRegistrationId(callback) {
+    // Get the highest existing registration ID
+    pool.query('SELECT MAX(CAST(SUBSTRING(registration_id, 2) AS UNSIGNED)) as max_id FROM participants WHERE registration_id REGEXP "^0[0-9]+$"', (error, results) => {
+        if (error) {
+            logger.error('Error getting max registration ID:', error);
+            callback(error, null);
+        } else {
+            const maxId = results[0].max_id || 1000;
+            const nextId = maxId + 1;
+            const customId = '0' + nextId.toString().padStart(4, '0');
+            callback(null, customId);
+        }
+    });
+}
+
 function logMessage(phoneNumber, messageType, content, participantId = null) {
     const query = 'INSERT INTO message_logs (phone_number, message_type, message_content, participant_id) VALUES (?, ?, ?, ?)';
     pool.query(query, [phoneNumber, messageType, content, participantId], (error) => {
@@ -124,6 +139,7 @@ Join the movement — Say No to Drugs, Yes to Life! 🌿`;
 // Twilio webhook endpoint (forwards to main messages endpoint)
 app.post('/webhook', (req, res) => {
     logger.info('Webhook request received, forwarding to /whatsapp/messages');
+    logger.info('Webhook request body:', req.body);
     // Forward the request to the main messages endpoint
     req.url = '/whatsapp/messages';
     app._router.handle(req, res);
@@ -132,6 +148,16 @@ app.post('/webhook', (req, res) => {
 // Main WhatsApp webhook endpoint
 app.post('/whatsapp/messages', (req, res) => {
     try {
+        // Add null checks for request body properties
+        if (!req.body || !req.body.From) {
+            logger.warn('Invalid webhook request: missing From field', req.body);
+            const MessagingResponse = twilio.twiml.MessagingResponse;
+            const response = new MessagingResponse();
+            response.message("Invalid request format. Please try again.");
+            sendResponse(res, response);
+            return;
+        }
+
         const fromNumber = req.body.From.replace('whatsapp:', '');
         const receivedMessage = (req.body.Body || '').trim();
         const whatsappProfileName = req.body.ProfileName || null; // WhatsApp profile name
@@ -193,7 +219,7 @@ app.post('/whatsapp/messages', (req, res) => {
                     logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                     sendResponse(res, response);
                 } else if (receivedMessage.toLowerCase() === "status") {
-                    response.message(`✅ You are already registered!\n\nRegistration ID: ${participant.id}\nName: ${participant.full_name}\nRegistration Date: ${participant.registration_date}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
+                    response.message(`✅ You are already registered!\n\nRegistration ID: ${participant.registration_id}\nName: ${participant.full_name}\nRegistration Date: ${participant.registration_date}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
                     logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                     sendResponse(res, response);
                 } else if (receivedMessage.startsWith("DELETE ")) {
@@ -235,7 +261,7 @@ app.post('/whatsapp/messages', (req, res) => {
                         });
                     }
                     
-                    response.message(`✅ You are already registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${participant.id}\nName: ${participant.full_name}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
+                    response.message(`✅ You are already registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${participant.registration_id}\nName: ${participant.full_name}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
                     logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                     sendResponse(res, response);
                 }
@@ -281,39 +307,50 @@ app.post('/whatsapp/messages', (req, res) => {
                         return;
                     }
 
-                    pool.query('INSERT INTO participants (phone_number, full_name, whatsapp_profile_name, registration_source) VALUES (?, ?, ?, ?)', 
-                        [fromNumber, sanitizedName, whatsappProfileName, 'whatsapp'], (insertError, insertResults) => {
-                        if (insertError) {
-                            logger.error("Error inserting data into the database: ", insertError);
+                    // Generate custom registration ID first
+                    generateCustomRegistrationId((idError, customId) => {
+                        if (idError) {
+                            logger.error("Error generating custom registration ID: ", idError);
                             response.message("We encountered an error while processing your registration. Please try again later.");
-                        } else {
-                            response.message(`🎉 Thank you ${sanitizedName}! You are successfully registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${insertResults.insertId}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
-                            logger.info(`New participant registered: ${sanitizedName} (${fromNumber}) with ID: ${insertResults.insertId}`);
+                            logMessage(fromNumber, 'outgoing', response.toString());
+                            sendResponse(res, response);
+                            return;
                         }
-                        logMessage(fromNumber, 'outgoing', response.toString(), insertResults ? insertResults.insertId : null);
-                        sendResponse(res, response);
-                        
-                        // Send image after registration confirmation
-                        if (!insertError) {
-                            setTimeout(() => {
-                                const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-                                twilioClient.messages.create({
-                                    from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
-                                    to: `whatsapp:${fromNumber}`,
-                                    mediaUrl: ['https://bot.ravist.in/nashamukht.jpg']
-                                }).then(message => {
-                                    logger.info(`Image sent to ${fromNumber}: ${message.sid}`);
-                                }).catch(error => {
-                                    logger.error(`Error sending image to ${fromNumber}:`, error);
-                                });
-                            }, 1000);
-                        }
+
+                        pool.query('INSERT INTO participants (registration_id, phone_number, full_name, whatsapp_profile_name, registration_source) VALUES (?, ?, ?, ?, ?)', 
+                            [customId, fromNumber, sanitizedName, whatsappProfileName, 'whatsapp'], (insertError, insertResults) => {
+                            if (insertError) {
+                                logger.error("Error inserting data into the database: ", insertError);
+                                response.message("We encountered an error while processing your registration. Please try again later.");
+                            } else {
+                                response.message(`🎉 Thank you ${sanitizedName}! You are successfully registered for ${EVENT_INFO.name}!\n\nYour Registration ID: ${customId}\n\nCommands:\n• 'Info' - Event details\n• 'Change Name' - Update your name`);
+                                logger.info(`New participant registered: ${sanitizedName} (${fromNumber}) with Registration ID: ${customId}`);
+                                
+                                // Send image after registration confirmation
+                                setTimeout(() => {
+                                    const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+                                    twilioClient.messages.create({
+                                        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
+                                        to: `whatsapp:${fromNumber}`,
+                                        mediaUrl: ['https://bot.ravist.in/nashamukht.jpg']
+                                    }).then(message => {
+                                        logger.info(`Image sent to ${fromNumber}: ${message.sid}`);
+                                    }).catch(error => {
+                                        logger.error(`Error sending image to ${fromNumber}:`, error);
+                                    });
+                                }, 1000);
+                            }
+                            logMessage(fromNumber, 'outgoing', response.toString(), insertResults ? insertResults.insertId : null);
+                            sendResponse(res, response);
+                        });
                     });
                 }
             }
         });
     } catch (error) {
         logger.error('Unexpected error in WhatsApp webhook:', error);
+        logger.error('Request body:', req.body);
+        const MessagingResponse = twilio.twiml.MessagingResponse;
         const response = new MessagingResponse();
         response.message("We encountered an unexpected error. Please try again later.");
         sendResponse(res, response);

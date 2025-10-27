@@ -33,7 +33,7 @@ $stats_result = $conn->query($stats_query);
 $stats = $stats_result->fetch_assoc();
 
 // Get recent registrations
-$recent_query = "SELECT id, phone_number, full_name, whatsapp_profile_name, registration_date, status 
+$recent_query = "SELECT id, registration_id, phone_number, full_name, whatsapp_profile_name, registration_date, status 
                  FROM participants 
                  ORDER BY registration_date DESC 
                  LIMIT 20";
@@ -309,7 +309,7 @@ $today_stats = $today_result->fetch_assoc();
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Registration ID</th>
                             <th>Phone Number</th>
                             <th>Full Name</th>
                             <th>WhatsApp Profile</th>
@@ -335,7 +335,7 @@ $today_stats = $today_result->fetch_assoc();
                                 }
                                 
                                 echo "<tr>";
-                                echo "<td>" . $row["id"] . "</td>";
+                                echo "<td>" . $row["registration_id"] . "</td>";
                                 echo "<td>" . $row["phone_number"] . "</td>";
                                 echo "<td>" . htmlspecialchars($row["full_name"]) . "</td>";
                                 echo "<td class='whatsapp-profile'>" . htmlspecialchars($row["whatsapp_profile_name"] ?: 'N/A') . "</td>";
@@ -355,13 +355,13 @@ $today_stats = $today_result->fetch_assoc();
             <div class="table-container">
                 <?php
                 // Get all participants
-                $all_query = "SELECT id, phone_number, full_name, whatsapp_profile_name, registration_date, status FROM participants ORDER BY registration_date DESC";
+                $all_query = "SELECT id, registration_id, phone_number, full_name, whatsapp_profile_name, registration_date, status FROM participants ORDER BY registration_date DESC";
                 $all_result = $conn->query($all_query);
                 ?>
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Registration ID</th>
                             <th>Phone Number</th>
                             <th>Full Name</th>
                             <th>WhatsApp Profile</th>
@@ -387,7 +387,7 @@ $today_stats = $today_result->fetch_assoc();
                                 }
                                 
                                 echo "<tr>";
-                                echo "<td>" . $row["id"] . "</td>";
+                                echo "<td>" . $row["registration_id"] . "</td>";
                                 echo "<td>" . $row["phone_number"] . "</td>";
                                 echo "<td>" . htmlspecialchars($row["full_name"]) . "</td>";
                                 echo "<td class='whatsapp-profile'>" . htmlspecialchars($row["whatsapp_profile_name"] ?: 'N/A') . "</td>";
