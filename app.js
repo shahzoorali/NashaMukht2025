@@ -88,6 +88,9 @@ function validatePhoneNumber(phone) {
 }
 
 function sanitizeName(name) {
+    if (!name || typeof name !== 'string') {
+        return '';
+    }
     return name.trim().replace(/[<>]/g, '');
 }
 
@@ -107,10 +110,48 @@ function generateCustomRegistrationId(callback) {
 }
 
 function logMessage(phoneNumber, messageType, content, participantId = null) {
+    // First, validate that participantId exists if provided
+    if (participantId) {
+        pool.query('SELECT id FROM participants WHERE id = ?', [participantId], (checkError, checkResults) => {
+            if (checkError) {
+                logger.error('Error checking participant existence:', checkError);
+                // Log without participant_id
+                logMessageWithoutParticipant(phoneNumber, messageType, content);
+                return;
+            }
+            
+            if (checkResults.length === 0) {
+                logger.warn(`Participant with ID ${participantId} not found, logging without participant_id`);
+                // Log without participant_id
+                logMessageWithoutParticipant(phoneNumber, messageType, content);
+                return;
+            }
+            
+            // Participant exists, proceed with normal logging
+            logMessageWithParticipant(phoneNumber, messageType, content, participantId);
+        });
+    } else {
+        // No participant_id provided, log without it
+        logMessageWithoutParticipant(phoneNumber, messageType, content);
+    }
+}
+
+function logMessageWithParticipant(phoneNumber, messageType, content, participantId) {
     const query = 'INSERT INTO message_logs (phone_number, message_type, message_content, participant_id) VALUES (?, ?, ?, ?)';
     pool.query(query, [phoneNumber, messageType, content, participantId], (error) => {
         if (error) {
-            logger.error('Error logging message:', error);
+            logger.error('Error logging message with participant:', error);
+            // Fallback to logging without participant_id
+            logMessageWithoutParticipant(phoneNumber, messageType, content);
+        }
+    });
+}
+
+function logMessageWithoutParticipant(phoneNumber, messageType, content) {
+    const query = 'INSERT INTO message_logs (phone_number, message_type, message_content, participant_id) VALUES (?, ?, ?, NULL)';
+    pool.query(query, [phoneNumber, messageType, content], (error) => {
+        if (error) {
+            logger.error('Error logging message without participant:', error);
         }
     });
 }
@@ -158,9 +199,30 @@ app.post('/whatsapp/messages', (req, res) => {
             return;
         }
 
-        const fromNumber = req.body.From.replace('whatsapp:', '');
+        // Additional validation for required fields
+        if (!req.body.From || typeof req.body.From !== 'string') {
+            logger.warn('Invalid webhook request: From field is not a string', req.body);
+            const MessagingResponse = twilio.twiml.MessagingResponse;
+            const response = new MessagingResponse();
+            response.message("Invalid request format. Please try again.");
+            sendResponse(res, response);
+            return;
+        }
+
+        // Safely extract and validate webhook data
+        const fromNumber = (req.body.From || '').replace('whatsapp:', '');
         const receivedMessage = (req.body.Body || '').trim();
         const whatsappProfileName = req.body.ProfileName || null; // WhatsApp profile name
+        
+        // Additional validation to prevent undefined errors
+        if (typeof fromNumber !== 'string' || typeof receivedMessage !== 'string') {
+            logger.warn('Invalid webhook data types:', { fromNumber, receivedMessage, body: req.body });
+            const MessagingResponse = twilio.twiml.MessagingResponse;
+            const response = new MessagingResponse();
+            response.message("Invalid request format. Please try again.");
+            sendResponse(res, response);
+            return;
+        }
         const MessagingResponse = twilio.twiml.MessagingResponse;
         const response = new MessagingResponse();
 
@@ -179,6 +241,7 @@ app.post('/whatsapp/messages', (req, res) => {
             if (error) {
                 logger.error("Error querying the database: ", error);
                 response.message("We encountered an error. Please try again later.");
+                logMessage(fromNumber, 'outgoing', response.toString(), null);
                 sendResponse(res, response);
                 return;
             }
@@ -224,17 +287,31 @@ app.post('/whatsapp/messages', (req, res) => {
                     sendResponse(res, response);
                 } else if (receivedMessage.startsWith("DELETE ")) {
                     // Handle hidden DELETE command (admin function)
-                    const deleteMatch = receivedMessage.match(/^DELETE\s+(\d+)$/);
+                    const deleteMatch = receivedMessage.match(/^DELETE\s+(.+)$/);
                     if (deleteMatch) {
-                        const deleteId = parseInt(deleteMatch[1]);
+                        const deleteId = deleteMatch[1].trim();
                         
-                        // Delete any participant by ID (admin command)
-                        pool.query('DELETE FROM participants WHERE id = ?', 
-                            [deleteId], (deleteError, deleteResults) => {
+                        // Check if it's a numeric ID or registration ID
+                        let query, queryParams;
+                        if (/^\d+$/.test(deleteId)) {
+                            // Numeric ID (like 9)
+                            query = 'DELETE FROM participants WHERE id = ?';
+                            queryParams = [parseInt(deleteId)];
+                        } else {
+                            // Registration ID (like 01010)
+                            query = 'DELETE FROM participants WHERE registration_id = ?';
+                            queryParams = [deleteId];
+                        }
+                        
+                        // Delete any participant by ID or registration_id (admin command)
+                        logger.info(`[EXISTING USER] Attempting to delete: ${deleteId} with query: ${query} and params: ${JSON.stringify(queryParams)}`);
+                        pool.query(query, queryParams, (deleteError, deleteResults) => {
+                            logger.info(`[EXISTING USER] Delete query result: error=${deleteError}, affectedRows=${deleteResults?.affectedRows}, results=${JSON.stringify(deleteResults)}`);
                             if (deleteError) {
                                 logger.error("Error deleting participant from database: ", deleteError);
                                 response.message("We encountered an error. Please try again later.");
                             } else if (deleteResults.affectedRows === 0) {
+                                logger.warn(`[EXISTING USER] No rows affected for DELETE query: ${query} with params: ${JSON.stringify(queryParams)}`);
                                 response.message("Registration not found.");
                             } else {
                                 response.message(`✅ Registration (ID: ${deleteId}) has been successfully deleted.`);
@@ -269,21 +346,35 @@ app.post('/whatsapp/messages', (req, res) => {
                 // New participant
                 if (receivedMessage.toLowerCase() === "hi" || receivedMessage.toLowerCase() === "hello" || receivedMessage.toLowerCase() === "start") {
                     response.message(`🏃‍♂️ Welcome to ${EVENT_INFO.name}! 🏃‍♀️\n\nPlease reply with your FULL NAME to complete registration.`);
-                    logMessage(fromNumber, 'outgoing', response.toString());
+                    logMessage(fromNumber, 'outgoing', response.toString(), null);
                     sendResponse(res, response);
                 } else if (receivedMessage.startsWith("DELETE ")) {
                     // Handle hidden DELETE command (admin function) for new users
-                    const deleteMatch = receivedMessage.match(/^DELETE\s+(\d+)$/);
+                    const deleteMatch = receivedMessage.match(/^DELETE\s+(.+)$/);
                     if (deleteMatch) {
-                        const deleteId = parseInt(deleteMatch[1]);
+                        const deleteId = deleteMatch[1].trim();
                         
-                        // Delete any participant by ID (admin command)
-                        pool.query('DELETE FROM participants WHERE id = ?', 
-                            [deleteId], (deleteError, deleteResults) => {
+                        // Check if it's a numeric ID or registration ID
+                        let query, queryParams;
+                        if (/^\d+$/.test(deleteId)) {
+                            // Numeric ID (like 9)
+                            query = 'DELETE FROM participants WHERE id = ?';
+                            queryParams = [parseInt(deleteId)];
+                        } else {
+                            // Registration ID (like 01010)
+                            query = 'DELETE FROM participants WHERE registration_id = ?';
+                            queryParams = [deleteId];
+                        }
+                        
+                        // Delete any participant by ID or registration_id (admin command)
+                        logger.info(`[NEW USER] Attempting to delete: ${deleteId} with query: ${query} and params: ${JSON.stringify(queryParams)}`);
+                        pool.query(query, queryParams, (deleteError, deleteResults) => {
+                            logger.info(`[NEW USER] Delete query result: error=${deleteError}, affectedRows=${deleteResults?.affectedRows}, results=${JSON.stringify(deleteResults)}`);
                             if (deleteError) {
                                 logger.error("Error deleting participant from database: ", deleteError);
                                 response.message("We encountered an error. Please try again later.");
                             } else if (deleteResults.affectedRows === 0) {
+                                logger.warn(`[NEW USER] No rows affected for DELETE query: ${query} with params: ${JSON.stringify(queryParams)}`);
                                 response.message("Registration not found.");
                             } else {
                                 response.message(`✅ Registration (ID: ${deleteId}) has been successfully deleted.`);
@@ -294,7 +385,7 @@ app.post('/whatsapp/messages', (req, res) => {
                         });
                     } else {
                         response.message("Invalid command format.");
-                        logMessage(fromNumber, 'outgoing', response.toString());
+                        logMessage(fromNumber, 'outgoing', response.toString(), null);
                         sendResponse(res, response);
                     }
                 } else {
@@ -302,7 +393,7 @@ app.post('/whatsapp/messages', (req, res) => {
                     const sanitizedName = sanitizeName(receivedMessage);
                     if (sanitizedName.length < 2) {
                         response.message("Please provide your full name (at least 2 characters).");
-                        logMessage(fromNumber, 'outgoing', response.toString());
+                        logMessage(fromNumber, 'outgoing', response.toString(), null);
                         sendResponse(res, response);
                         return;
                     }
@@ -312,7 +403,7 @@ app.post('/whatsapp/messages', (req, res) => {
                         if (idError) {
                             logger.error("Error generating custom registration ID: ", idError);
                             response.message("We encountered an error while processing your registration. Please try again later.");
-                            logMessage(fromNumber, 'outgoing', response.toString());
+                            logMessage(fromNumber, 'outgoing', response.toString(), null);
                             sendResponse(res, response);
                             return;
                         }
@@ -430,10 +521,122 @@ process.on('SIGINT', () => {
     });
 });
 
-console.log("Starting server...");
-app.listen(port, () => {
-    logger.info(`🏃‍♂️ Nasha Mukht Bharat RUN server running at http://localhost:${port}`);
-    logger.info(`Event: ${EVENT_INFO.name} on ${EVENT_INFO.date} at ${EVENT_INFO.location}`);
-}).on('error', err => {
-    logger.error('Failed to start server:', err);
-});
+// Function to check if port is available
+function checkPort(port) {
+    return new Promise((resolve, reject) => {
+        const net = require('net');
+        const server = net.createServer();
+        
+        server.listen(port, () => {
+            server.once('close', () => {
+                resolve(true);
+            });
+            server.close();
+        });
+        
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                resolve(false);
+            } else {
+                reject(err);
+            }
+        });
+    });
+}
+
+// Function to find available port
+async function findAvailablePort(startPort) {
+    let port = startPort;
+    const maxPort = startPort + 100; // Try up to 100 ports
+    
+    while (port <= maxPort) {
+        const isAvailable = await checkPort(port);
+        if (isAvailable) {
+            return port;
+        }
+        port++;
+    }
+    
+    throw new Error(`No available ports found between ${startPort} and ${maxPort}`);
+}
+
+// Function to kill existing process on port
+function killProcessOnPort(port) {
+    return new Promise((resolve) => {
+        const { exec } = require('child_process');
+        exec(`lsof -ti:${port}`, (error, stdout) => {
+            if (error || !stdout.trim()) {
+                resolve();
+                return;
+            }
+            
+            const pids = stdout.trim().split('\n');
+            pids.forEach(pid => {
+                exec(`kill -9 ${pid}`, (killError) => {
+                    if (killError) {
+                        logger.warn(`Failed to kill process ${pid}:`, killError.message);
+                    } else {
+                        logger.info(`Killed existing process ${pid} on port ${port}`);
+                    }
+                });
+            });
+            
+            // Wait a bit for processes to be killed
+            setTimeout(resolve, 2000);
+        });
+    });
+}
+
+// Start server with port conflict resolution
+async function startServer() {
+    try {
+        console.log("Starting server...");
+        
+        // Check if port is in use
+        const isPortAvailable = await checkPort(port);
+        
+        if (!isPortAvailable) {
+            logger.warn(`Port ${port} is in use, attempting to free it...`);
+            await killProcessOnPort(port);
+            
+            // Wait a bit and check again
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            const isStillInUse = await checkPort(port);
+            
+            if (!isStillInUse) {
+                logger.info(`Port ${port} is now available`);
+            } else {
+                logger.warn(`Port ${port} is still in use, finding alternative port...`);
+                const newPort = await findAvailablePort(port);
+                logger.info(`Using alternative port: ${newPort}`);
+                process.env.PORT = newPort;
+            }
+        }
+        
+        const finalPort = process.env.PORT || port;
+        
+        app.listen(finalPort, () => {
+            logger.info(`🏃‍♂️ Nasha Mukht Bharat RUN server running at http://localhost:${finalPort}`);
+            logger.info(`Event: ${EVENT_INFO.name} on ${EVENT_INFO.date} at ${EVENT_INFO.location}`);
+            
+            // Signal PM2 that the app is ready
+            if (process.send) {
+                process.send('ready');
+            }
+        }).on('error', err => {
+            logger.error('Failed to start server:', err);
+            if (err.code === 'EADDRINUSE') {
+                logger.error('Port is still in use. Please check for other running instances.');
+                logger.error('Try running: pm2 stop nasha-mukht-bot && pm2 start ecosystem.config.js');
+            }
+            process.exit(1);
+        });
+        
+    } catch (error) {
+        logger.error('Error starting server:', error);
+        process.exit(1);
+    }
+}
+
+// Start the server
+startServer();

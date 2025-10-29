@@ -8,6 +8,12 @@
     "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
+    "pm2:start": "./start.sh",
+    "pm2:stop": "./stop.sh",
+    "pm2:restart": "pm2 restart nasha-mukht-bot",
+    "pm2:logs": "pm2 logs nasha-mukht-bot",
+    "pm2:status": "pm2 status",
+    "pm2:monit": "pm2 monit",
     "logs": "pm2 logs nasha-mukht-bot",
     "restart": "pm2 restart nasha-mukht-bot",
     "stop": "pm2 stop nasha-mukht-bot"
