@@ -248,34 +248,61 @@ app.post('/whatsapp/messages', (req, res) => {
 
             if (results.length > 0) {
                 const participant = results[0];
+                logger.info(`[MESSAGE HANDLER] Existing participant found: ${fromNumber}, Status: ${participant.status}, Received message: "${receivedMessage}", Lowercase: "${receivedMessage.toLowerCase()}"`);
                 
-                if (participant.status === 'awaiting_new_name') {
+                if (participant.status === 'awaiting_name_change') {
                     // Update participant's name in the database
+                    logger.info(`[NAME UPDATE] Participant ${fromNumber} is awaiting new name. Received message: "${receivedMessage}"`);
                     const sanitizedName = sanitizeName(receivedMessage);
+                    logger.info(`[NAME UPDATE] Sanitized name: "${sanitizedName}"`);
+                    
                     pool.query('UPDATE participants SET full_name = ?, whatsapp_profile_name = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE phone_number = ?', 
-                        [sanitizedName, whatsappProfileName, 'active', fromNumber], (updateError) => {
+                        [sanitizedName, whatsappProfileName, 'active', fromNumber], (updateError, updateResults) => {
                         if (updateError) {
-                            logger.error("Error updating participant name in the database: ", updateError);
+                            logger.error(`[NAME UPDATE] Error updating participant name in the database for ${fromNumber}:`, updateError);
                             response.message("We encountered an error updating your name. Please try again later.");
                         } else {
+                            logger.info(`[NAME UPDATE] UPDATE query executed. Affected rows: ${updateResults?.affectedRows || 0}, Changed rows: ${updateResults?.changedRows || 0}`);
+                            if (updateResults && updateResults.affectedRows === 0) {
+                                logger.warn(`[NAME UPDATE] UPDATE query returned 0 affected rows for ${fromNumber}`);
+                            }
                             response.message(`✅ Your name has been successfully updated to: ${sanitizedName}\n\n${getEventInfoMessage()}`);
-                            logger.info(`Participant ${fromNumber} updated name to: ${sanitizedName}`);
+                            logger.info(`[NAME UPDATE] Participant ${fromNumber} updated name to: ${sanitizedName}`);
                         }
                         logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
                         sendResponse(res, response);
                     });
                 } else if (receivedMessage.toLowerCase() === "change name") {
-                    // Set participant's status to 'awaiting_new_name' and update profile name
+                    // Set participant's status to 'awaiting_name_change' and update profile name
+                    logger.info(`[CHANGE NAME] Command received from ${fromNumber}. Current status: ${participant.status}, Participant ID: ${participant.id}`);
+                    logger.info(`[CHANGE NAME] Attempting to update status to 'awaiting_name_change' for phone: ${fromNumber}`);
+                    
                     pool.query('UPDATE participants SET status = ?, whatsapp_profile_name = ?, updated_at = CURRENT_TIMESTAMP WHERE phone_number = ?', 
-                        ['awaiting_new_name', whatsappProfileName, fromNumber], (updateError) => {
+                        ['awaiting_name_change', whatsappProfileName, fromNumber], (updateError, updateResults) => {
                         if (updateError) {
-                            logger.error("Error setting participant status in the database: ", updateError);
+                            logger.error(`[CHANGE NAME] Error setting participant status in the database for ${fromNumber}:`, updateError);
                             response.message("We encountered an error. Please try again later.");
                         } else {
-                            response.message("Please reply with your new FULL NAME to update your registration.");
+                            logger.info(`[CHANGE NAME] UPDATE query executed. Affected rows: ${updateResults?.affectedRows || 0}, Changed rows: ${updateResults?.changedRows || 0}`);
+                            
+                            if (updateResults && updateResults.affectedRows === 0) {
+                                logger.warn(`[CHANGE NAME] UPDATE query returned 0 affected rows for ${fromNumber}. Participant may not exist or phone number mismatch.`);
+                                response.message("We encountered an error updating your status. Please try again later.");
+                            } else {
+                                logger.info(`[CHANGE NAME] Successfully updated status to 'awaiting_name_change' for ${fromNumber}`);
+                                response.message("Please reply with your new FULL NAME to update your registration.");
+                            }
                         }
+                        
+                        logger.info(`[CHANGE NAME] Preparing to send response to ${fromNumber}. Response message: ${response.toString().substring(0, 100)}...`);
                         logMessage(fromNumber, 'outgoing', response.toString(), participant.id);
-                        sendResponse(res, response);
+                        
+                        try {
+                            sendResponse(res, response);
+                            logger.info(`[CHANGE NAME] Response sent successfully to ${fromNumber}`);
+                        } catch (sendError) {
+                            logger.error(`[CHANGE NAME] Error sending response to ${fromNumber}:`, sendError);
+                        }
                     });
                 } else if (receivedMessage.toLowerCase() === "info") {
                     response.message(getEventInfoMessage());
@@ -291,14 +318,15 @@ app.post('/whatsapp/messages', (req, res) => {
                     if (deleteMatch) {
                         const deleteId = deleteMatch[1].trim();
                         
-                        // Check if it's a numeric ID or registration ID
+                        // Try both registration_id and id to handle numeric registration IDs (like "01010")
+                        // This ensures we find the record whether user sends registration_id or numeric id
                         let query, queryParams;
                         if (/^\d+$/.test(deleteId)) {
-                            // Numeric ID (like 9)
-                            query = 'DELETE FROM participants WHERE id = ?';
-                            queryParams = [parseInt(deleteId)];
+                            // If all digits, try both id and registration_id (handles cases like "01010" vs "10")
+                            query = 'DELETE FROM participants WHERE id = ? OR registration_id = ?';
+                            queryParams = [parseInt(deleteId), deleteId];
                         } else {
-                            // Registration ID (like 01010)
+                            // Non-numeric registration ID, only check registration_id
                             query = 'DELETE FROM participants WHERE registration_id = ?';
                             queryParams = [deleteId];
                         }
@@ -354,14 +382,15 @@ app.post('/whatsapp/messages', (req, res) => {
                     if (deleteMatch) {
                         const deleteId = deleteMatch[1].trim();
                         
-                        // Check if it's a numeric ID or registration ID
+                        // Try both registration_id and id to handle numeric registration IDs (like "01010")
+                        // This ensures we find the record whether user sends registration_id or numeric id
                         let query, queryParams;
                         if (/^\d+$/.test(deleteId)) {
-                            // Numeric ID (like 9)
-                            query = 'DELETE FROM participants WHERE id = ?';
-                            queryParams = [parseInt(deleteId)];
+                            // If all digits, try both id and registration_id (handles cases like "01010" vs "10")
+                            query = 'DELETE FROM participants WHERE id = ? OR registration_id = ?';
+                            queryParams = [parseInt(deleteId), deleteId];
                         } else {
-                            // Registration ID (like 01010)
+                            // Non-numeric registration ID, only check registration_id
                             query = 'DELETE FROM participants WHERE registration_id = ?';
                             queryParams = [deleteId];
                         }
@@ -423,7 +452,7 @@ app.post('/whatsapp/messages', (req, res) => {
                                     twilioClient.messages.create({
                                         from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
                                         to: `whatsapp:${fromNumber}`,
-                                        mediaUrl: ['https://bot.ravist.in/nashamukht.jpg']
+                                        mediaUrl: ['https://i.ibb.co/2YMzcZv4/nashamukht.jpg']
                                     }).then(message => {
                                         logger.info(`Image sent to ${fromNumber}: ${message.sid}`);
                                     }).catch(error => {
